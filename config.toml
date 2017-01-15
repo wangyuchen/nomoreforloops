@@ -5,6 +5,7 @@ title = "Lithium Theme"
 theme = "hugo-lithium-theme"
 googleAnalytics = ""
 disqusShortname = ""
+publishDir = "docs"
 ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
 
 [permalinks]
