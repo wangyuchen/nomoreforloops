@@ -6,8 +6,54 @@
     <description>Recent content on Lithium Theme</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Fri, 30 Dec 2016 21:49:57 -0700</lastBuildDate>
+    <lastBuildDate>Mon, 16 Jan 2017 23:13:00 -0500</lastBuildDate>
     <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>RStudio Best Practice: General Options</title>
+      <link>/2017/01/16/rstudio-best-practice-general-options/</link>
+      <pubDate>Mon, 16 Jan 2017 23:13:00 -0500</pubDate>
+      
+      <guid>/2017/01/16/rstudio-best-practice-general-options/</guid>
+      <description>
+
+&lt;p&gt;Over the years RStudio has become the most powerful and versatile IDE of R. I started using RStudio back in 2011, when R was in its version 2.12. Back in the day, RStudio was a better choice for me than the default R-GUI simply because of the auto-completion it provided. Being a C++ and Xcode user, memorizing all those R commands in an early learning stage was impossible for me.&lt;/p&gt;
+
+&lt;p&gt;With R and RStudio becoming more and more popular over the last five years, RStudio keeps providing all kinds of integration to R. It started with other popular software like TeX and Git, then through integration of popular R packages like RCpp. Finally, RStudio hired some of the most talented R developers and provided us with a whole new &lt;a href=&#34;https://cran.r-project.org/web/packages/tidyverse/index.html&#34;&gt;universe&lt;/a&gt; of packages.&lt;/p&gt;
+
+&lt;p&gt;However, all of those new features sometimes confuse new users, and it seems like we have a lot of them. Besides, when so many features are available, some may not work well with others. This motivated me to write down some of the &amp;ldquo;best practice&amp;rdquo; from my own experience. Just like the style guide on R programming, how to use RStudio or any other tools is merely a personal preference. I don&amp;rsquo;t think there is a &amp;ldquo;best&amp;rdquo; practice out there, but there are definitely bad ones, and I think many people could benefit from steer clear of those. In each post, I&amp;rsquo;ll focus on some features of RStudio, and recommend some settings and introduce some tips that I found useful.&lt;/p&gt;
+
+&lt;h2 id=&#34;general-options&#34;&gt;General Options&lt;/h2&gt;
+
+&lt;p&gt;Most of RStudio&amp;rsquo;s options lie in the &lt;em&gt;preference&lt;/em&gt; panel. These are the global options that apply to the current session, and they are also the default for any projects. For some options, every project could have their own settings in the &lt;em&gt;project options&lt;/em&gt; (available under tools/project-options or the drop down menu at top-right corner). The first sub-panel in preference is the &lt;em&gt;general options&lt;/em&gt; and the topic of this post.&lt;/p&gt;
+
+&lt;h3 id=&#34;restore-data&#34;&gt;Restore Data&lt;/h3&gt;
+
+&lt;p&gt;There is this option called &lt;em&gt;Restore data&lt;/em&gt;, and right next to it, &lt;em&gt;Save workspace on exit&lt;/em&gt;. These two options, if both selected, save the current environment to a hidden &lt;code&gt;.RData&lt;/code&gt; file in your working directory, and restore it when you reopen from that directory.&lt;/p&gt;
+
+&lt;p&gt;This may seem like a convenient feature, but I don&amp;rsquo;t recommend using them because of the following situations:&lt;/p&gt;
+
+&lt;ol&gt;
+&lt;li&gt;You don&amp;rsquo;t always clean your working environment and over the time some large data stayed there in memory. Every time you restart, RStudio have to write that data to file, and then read it back in again, makes it extremely slow at start up.&lt;/li&gt;
+&lt;li&gt;You relied on the restored data to work, but you let RStudio to ask you on exit whether to save the environment or not. Eventually, you will mistakenly click on &lt;em&gt;No&lt;/em&gt; instead of &lt;em&gt;Yes&lt;/em&gt;.&lt;/li&gt;
+&lt;li&gt;The code to generate a &lt;code&gt;tmp&lt;/code&gt; data set is accidentally deleted but the generated &lt;code&gt;tmp&lt;/code&gt; object is still in memory every time you run the script. Instead of giving an error the first time you restart and run it after you deleted the code, it gives you an error when you happen to overwrite &lt;code&gt;tmp&lt;/code&gt; to something else.&lt;/li&gt;
+&lt;/ol&gt;
+
+&lt;p&gt;All of the above happened to me. Basically, you can see that these options violate the rule of reproducibility. In order to have a reproducible analysis, you should ensure everything with code, not the tools you use. For example, if you want to save something, add an explicitly call to save it to a file, or set seed before a simulation. Don&amp;rsquo;t rely on RStudio to keep the record for you.&lt;/p&gt;
+
+&lt;p&gt;No matter you choose to save it or not, I think it&amp;rsquo;s also good practice to regularly clean (read: clear) the global environment, especially for those who have a very limited imagination for variable names, they will almost always run into case 3 above.&lt;/p&gt;
+
+&lt;h3 id=&#34;save-history&#34;&gt;Save History&lt;/h3&gt;
+
+&lt;p&gt;Also because of reproducibility, I recommend checking &lt;em&gt;always save history&lt;/em&gt;. When something goes wrong, finding clues in history is way better than finding an object without context in the restored environment.&lt;/p&gt;
+
+&lt;p&gt;I also have a little tip on using the saved history. It&amp;rsquo;s not about an option in the general panel, but since this is the only thing that&amp;rsquo;s history-related, I&amp;rsquo;ll put it here.&lt;/p&gt;
+
+&lt;p&gt;RStudio provided some really cool shortcuts for command history in console. I think the shortcuts are too good that makes the &lt;em&gt;History&lt;/em&gt; pane not useful any more. In console, &lt;code&gt;control/command + up&lt;/code&gt; will bring up the history search. Hit the shortcut without anything, it will bring up the most recent history. Type a few words and hit the shortcut, it will search with partial match. This has become the single most used shortcut when I have to work in the console.&lt;/p&gt;
+
+&lt;p&gt;PS: you can see all the shortcuts in &lt;em&gt;Help&lt;/em&gt; menu or &lt;code&gt;Alt + Shift + K&lt;/code&gt;. There are a lot so I will only mention the ones I find useful.&lt;/p&gt;
+</description>
+    </item>
     
     <item>
       <title>A Plain Markdown Post</title>
