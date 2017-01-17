@@ -1,10 +1,10 @@
-baseurl = "/"
+baseurl = "http://www.prioritydetails.com/"
 relativeurls = true
 languageCode = "en-us"
-title = "Lithium Theme"
+title = "Priority Details"
 theme = "hugo-lithium-theme"
 googleAnalytics = ""
-disqusShortname = ""
+disqusShortname = "priority-details"
 publishDir = "docs"
 ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
 
