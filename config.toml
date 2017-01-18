@@ -3,7 +3,7 @@ relativeurls = true
 languageCode = "en-us"
 title = "Priority Details"
 theme = "hugo-lithium-theme"
-googleAnalytics = ""
+googleAnalytics = "UA-90533434-1"
 disqusShortname = "priority-details"
 publishDir = "docs"
 ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
@@ -16,13 +16,13 @@ ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
     url = "/about/"
 [[menu.main]]
     name = "GitHub"
-    url = "https://github.com/rstudio/blogdown"
+    url = "https://github.com/wangyuchen"
 [[menu.main]]
-    name = "Twitter"
-    url = "https://twitter.com/rstudio"
+    name = "LinkedIn"
+    url = "https://www.linkedin.com/in/yuchen0712/"
 
 [params]
-    description = "A website built through Hugo and blogdown."
+    description = "A Blog on top priority details in R and statistics."
 
     # options for highlight.js (version, additional languages, and theme)
     highlightjsVersion = "9.9.0"
