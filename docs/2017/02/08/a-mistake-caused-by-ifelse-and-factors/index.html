@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.18.1" />
+
+
+<title>A Mistake caused by ifelse and Factors - Priority Details</title>
+<meta property="og:title" content="A Mistake caused by ifelse and Factors - Priority Details">
+
+
+
+  
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/styles/github.min.css' rel='stylesheet' type='text/css'>
+
+<link rel="stylesheet" href="../../../../css/main.css" media="all">
+
+
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="../../../../" class="nav-logo">
+    <img src="../../../../images/logo.png" 
+         width="50" 
+         height="50" 
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="../../../../about/">About</a></li>
+    
+    <li><a href="https://github.com/wangyuchen">GitHub</a></li>
+    
+    <li><a href="https://www.linkedin.com/in/yuchen0712/">LinkedIn</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+    <span class="article-duration">6 min read</span>
+    
+
+    <h1 class="article-title">A Mistake caused by ifelse and Factors</h1>
+
+    
+    <span class="article-date">February 8, 2017</span>
+    
+
+    <div class="article-content">
+
+
+<p>I made a mistake in one of the data processing script I wrote in R a while ago and figured I should share the story with everybody.</p>
+<p>The mistake was caught recently when I had to re-do a similar request again. I’ve already discarded the script, so I started from scratch, and found that part of the numbers didn’t match the old ones in one of the tables I sent. Without the old scripts, it’s quite hard to figure out what happened, and it turned out it’s just one letter that caused the problem.</p>
+<p>Here’s a simplified example. There are two variables in this survey data set, and they work together as a time measurement. One is called something like <code>ABC_DEFG123HIJ_UN</code> that stands for unit of time, and the other is called <code>ABC_DEFG123HIJ_NN</code> which stands for the actual number. Here’s a snippet of how the data looks like. In reality I can’t view or print out the data because it’s too big.</p>
+<pre><code>##    CASEID ABC_DEFG123HIJ_UN ABC_DEFG123HIJ_NN
+## 1      31     (2) 2 = Hours                 2
+## 2      21   (1) 1 = Minutes                 5
+## 3      70     (2) 2 = Hours                 1
+## 4      22     (2) 2 = Hours                NA
+## 5      47   (1) 1 = Minutes                30
+## 6      61     (2) 2 = Hours                 2
+## 7      25   (1) 1 = Minutes                 5
+## 8      43     (2) 2 = Hours                 3
+## 9      54   (1) 1 = Minutes                NA
+## 10     10     (2) 2 = Hours                 1</code></pre>
+<p>To convert everything into time and calculate average (and also base size), this is all I needed to do.</p>
+<pre class="r"><code>library(dplyr)
+sample_data %&gt;% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == &quot;(1) 1 = Minutes&quot;, 
+                       ABC_DEFG123HIJ_NN, ABC_DEFG123HIJ_NN * 60)) %&gt;% 
+  summarise(avg_time = mean(time, na.rm = TRUE), 
+            n = sum(!is.na(time)))</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##   avg_time     n
+##      &lt;dbl&gt; &lt;int&gt;
+## 1     72.5     8</code></pre>
+<p>However, this is not what I’ve reported! I had an average of <span class="math inline">\(60.4\)</span> and <span class="math inline">\(9\)</span> non-missing observations. You probably have noticed that <span class="math inline">\(9\)</span> non-missing value is an error already, but without actually seeing the data I wouldn’t know. The average of <span class="math inline">\(72.5\)</span> is close but since <code>n</code> is also different, I started to suspect that I might’ve used a wrong variable. Since I’m sure I’m using the same data, logically it can only be from a different variable that has <span class="math inline">\(9\)</span> non-missing values, right?</p>
+<blockquote>
+<p>After going through all 2000 variables, I can’t find any other variable that has exactly <code>9</code> non-missing values and produces an average of <span class="math inline">\(60.4\)</span>.</p>
+</blockquote>
+<p>After struggling for 2 days, I found that the following script gave me the exact same result as before. Note that I misspelled <code>_NN</code> as <code>_UN</code>, probably because of auto-completion.</p>
+<pre class="r"><code>sample_data %&gt;% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == &quot;(1) 1 = Minutes&quot;, 
+                       ABC_DEFG123HIJ_UN,  # A typo here
+                       ABC_DEFG123HIJ_NN * 60)) %&gt;% 
+    summarise(avg_time = mean(time, na.rm = TRUE), 
+              n = sum(!is.na(time)))</code></pre>
+<pre><code>## # A tibble: 1 × 2
+##   avg_time     n
+##      &lt;dbl&gt; &lt;int&gt;
+## 1 60.44444     9</code></pre>
+<p>A closer look at what happened. I accidentally put a factor and a numeric into one <code>ifelse</code> call, it converts them all to integer silently, and returned the integer levels of the factor. Not only did it change the values silently, it coincidentally converted the missing value too.</p>
+<p>Consider a simpler example.</p>
+<pre class="r"><code>set.seed(123)
+factor(LETTERS[1:5])</code></pre>
+<pre><code>## [1] A B C D E
+## Levels: A B C D E</code></pre>
+<pre class="r"><code># returns numeric vector instead of letters and numbers as character
+ifelse(rnorm(5) &gt; 0, factor(LETTERS[1:5]), 6:10)  </code></pre>
+<pre><code>## [1] 6 7 3 4 5</code></pre>
+<p>Note that the <code>3, 4, 5</code> was from the factor of letters. You usually see it like characters when it was printed, but it’s actually integers with labels. For more details of factors, see <a href="http://adv-r.had.co.nz/Data-structures.html#attributes">this paragraph</a> from <em>Advanced R</em>.</p>
+<p>Comparing to this one, where one factor and one character are in an <code>ifelse</code> call, the factor will be converted to character, but not to their labels, but to the integer values.</p>
+<pre class="r"><code>ifelse(rnorm(5) &gt; 0, factor(LETTERS[1:5]), LETTERS[6:10])</code></pre>
+<pre><code>## [1] &quot;1&quot; &quot;2&quot; &quot;H&quot; &quot;I&quot; &quot;J&quot;</code></pre>
+<p>In my data, the missing values associated with level <code>&quot;(2) 2 = Hours&quot;</code> will not be affected, because it’s in the <code>FALSE</code> statement of the <code>ifelse</code>. However, the missing values in “(1) 1 = Minutes”, because of the misspelling, were converted to integer <span class="math inline">\(1\)</span>, along with other values, in the <code>TRUE</code> statement. Look at all the <code>time</code> values that comes from a <code>&quot;(1) 1 = Minutes&quot;</code>.</p>
+<pre class="r"><code>sample_data %&gt;% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == &quot;(1) 1 = Minutes&quot;, 
+                       ABC_DEFG123HIJ_UN,  # A typo here
+                       ABC_DEFG123HIJ_NN * 60))</code></pre>
+<pre><code>## # A tibble: 10 × 4
+##    CASEID ABC_DEFG123HIJ_UN ABC_DEFG123HIJ_NN  time
+##     &lt;int&gt;            &lt;fctr&gt;             &lt;dbl&gt; &lt;dbl&gt;
+## 1      31     (2) 2 = Hours                 2   120
+## 2      21   (1) 1 = Minutes                 5     1
+## 3      70     (2) 2 = Hours                 1    60
+## 4      22     (2) 2 = Hours                NA    NA
+## 5      47   (1) 1 = Minutes                30     1
+## 6      61     (2) 2 = Hours                 2   120
+## 7      25   (1) 1 = Minutes                 5     1
+## 8      43     (2) 2 = Hours                 3   180
+## 9      54   (1) 1 = Minutes                NA     1
+## 10     10     (2) 2 = Hours                 1    60</code></pre>
+<p>The typo created a valid new column from part-factor and part-integer, without any warning or error message, and perfectly disguised with some missing values carried over from “Hours”, and that caused me to look for variables that has 9 non-missing values and overlooked the real problem.</p>
+<p>This is really annoying – even a funciton as simple as <code>ifelse</code> is not that straightforward and safe to use. The mistake would be more obvious if I wasn’t using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn’t be ignored.</p>
+<p>Then Hadley came to rescue. Use <code>dplyr::if_else</code> instead of <code>ifelse</code> to improve error and missing value handling.</p>
+<pre class="r"><code># Give warnings when converting integer to factors
+if_else(rnorm(5) &gt; 0, factor(LETTERS[1:5]), 6:10)  </code></pre>
+<pre><code>## Warning in `[&lt;-.factor`(`*tmp*`, i, value = 10L): invalid factor level, NA
+## generated</code></pre>
+<pre><code>## [1] A    B    C    D    &lt;NA&gt;
+## Levels: A B C D E</code></pre>
+<pre><code># Don&#39;t convert factors
+if_else(rnorm(5) &gt; 0, factor(LETTERS[1:5]), LETTERS[6:10])
+## Error: `false` has type &#39;character&#39; not &#39;integer&#39;</code></pre>
+<pre class="r"><code># Handling missing in condition
+if_else(c(TRUE, FALSE, NA), 1, 0, missing = -1)</code></pre>
+<pre><code>## [1]  1  0 -1</code></pre>
+<p>Therefore I recommend using <code>dplyr::if_else</code> whenever possible and use caution when dealing with factors. There might be some new package coming out soon to handle factors appropriately.</p>
+
+
+
+    </div>
+  </article>
+
+  <div id="disqus_thread"></div>
+<script type="text/javascript">
+
+(function() {
+    
+    
+    if (window.location.hostname == "localhost")
+        return;
+
+    var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+    var disqus_shortname = 'priority-details';
+    dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+    (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+})();
+</script>
+<noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+<a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="../../../../index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="../../../../images/hugo-logo.png" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/highlight.min.js"></script>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/languages/r.min.js"></script>
+    
+    <script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.9.0/languages/yaml.min.js"></script>
+    
+    <script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+    
+    <script type="text/x-mathjax-config">
+    MathJax.Hub.Config({
+      tex2jax: {
+        skipTags: ['script', 'noscript', 'style', 'textarea', 'pre']
+      }
+    });
+    </script>
+    <script type="text/javascript"
+      src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML">
+    </script>
+    
+<script>
+(function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+(i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+})(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+ga('create', 'UA-90533434-1', 'auto');
+ga('send', 'pageview');
+</script>
+
+  </body>
+</html>
+

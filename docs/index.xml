@@ -6,8 +6,116 @@
     <description>Recent content on Priority Details</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
-    <lastBuildDate>Mon, 16 Jan 2017 23:13:00 -0500</lastBuildDate>
+    <lastBuildDate>Wed, 08 Feb 2017 16:48:15 -0500</lastBuildDate>
     <atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+    
+    <item>
+      <title>A Mistake caused by ifelse and Factors</title>
+      <link>/2017/02/08/a-mistake-caused-by-ifelse-and-factors/</link>
+      <pubDate>Wed, 08 Feb 2017 16:48:15 -0500</pubDate>
+      
+      <guid>/2017/02/08/a-mistake-caused-by-ifelse-and-factors/</guid>
+      <description>&lt;!-- BLOGDOWN-BODY-BEFORE
+
+/BLOGDOWN-BODY-BEFORE --&gt;
+
+&lt;p&gt;I made a mistake in one of the data processing script I wrote in R a while ago and figured I should share the story with everybody.&lt;/p&gt;
+&lt;p&gt;The mistake was caught recently when I had to re-do a similar request again. I’ve already discarded the script, so I started from scratch, and found that part of the numbers didn’t match the old ones in one of the tables I sent. Without the old scripts, it’s quite hard to figure out what happened, and it turned out it’s just one letter that caused the problem.&lt;/p&gt;
+&lt;p&gt;Here’s a simplified example. There are two variables in this survey data set, and they work together as a time measurement. One is called something like &lt;code&gt;ABC_DEFG123HIJ_UN&lt;/code&gt; that stands for unit of time, and the other is called &lt;code&gt;ABC_DEFG123HIJ_NN&lt;/code&gt; which stands for the actual number. Here’s a snippet of how the data looks like. In reality I can’t view or print out the data because it’s too big.&lt;/p&gt;
+&lt;pre&gt;&lt;code&gt;##    CASEID ABC_DEFG123HIJ_UN ABC_DEFG123HIJ_NN
+## 1      31     (2) 2 = Hours                 2
+## 2      21   (1) 1 = Minutes                 5
+## 3      70     (2) 2 = Hours                 1
+## 4      22     (2) 2 = Hours                NA
+## 5      47   (1) 1 = Minutes                30
+## 6      61     (2) 2 = Hours                 2
+## 7      25   (1) 1 = Minutes                 5
+## 8      43     (2) 2 = Hours                 3
+## 9      54   (1) 1 = Minutes                NA
+## 10     10     (2) 2 = Hours                 1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;To convert everything into time and calculate average (and also base size), this is all I needed to do.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;library(dplyr)
+sample_data %&amp;gt;% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == &amp;quot;(1) 1 = Minutes&amp;quot;, 
+                       ABC_DEFG123HIJ_NN, ABC_DEFG123HIJ_NN * 60)) %&amp;gt;% 
+  summarise(avg_time = mean(time, na.rm = TRUE), 
+            n = sum(!is.na(time)))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 × 2
+##   avg_time     n
+##      &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
+## 1     72.5     8&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;However, this is not what I’ve reported! I had an average of &lt;span class=&#34;math inline&#34;&gt;\(60.4\)&lt;/span&gt; and &lt;span class=&#34;math inline&#34;&gt;\(9\)&lt;/span&gt; non-missing observations. You probably have noticed that &lt;span class=&#34;math inline&#34;&gt;\(9\)&lt;/span&gt; non-missing value is an error already, but without actually seeing the data I wouldn’t know. The average of &lt;span class=&#34;math inline&#34;&gt;\(72.5\)&lt;/span&gt; is close but since &lt;code&gt;n&lt;/code&gt; is also different, I started to suspect that I might’ve used a wrong variable. Since I’m sure I’m using the same data, logically it can only be from a different variable that has &lt;span class=&#34;math inline&#34;&gt;\(9\)&lt;/span&gt; non-missing values, right?&lt;/p&gt;
+&lt;blockquote&gt;
+&lt;p&gt;After going through all 2000 variables, I can’t find any other variable that has exactly &lt;code&gt;9&lt;/code&gt; non-missing values and produces an average of &lt;span class=&#34;math inline&#34;&gt;\(60.4\)&lt;/span&gt;.&lt;/p&gt;
+&lt;/blockquote&gt;
+&lt;p&gt;After struggling for 2 days, I found that the following script gave me the exact same result as before. Note that I misspelled &lt;code&gt;_NN&lt;/code&gt; as &lt;code&gt;_UN&lt;/code&gt;, probably because of auto-completion.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sample_data %&amp;gt;% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == &amp;quot;(1) 1 = Minutes&amp;quot;, 
+                       ABC_DEFG123HIJ_UN,  # A typo here
+                       ABC_DEFG123HIJ_NN * 60)) %&amp;gt;% 
+    summarise(avg_time = mean(time, na.rm = TRUE), 
+              n = sum(!is.na(time)))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 1 × 2
+##   avg_time     n
+##      &amp;lt;dbl&amp;gt; &amp;lt;int&amp;gt;
+## 1 60.44444     9&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;A closer look at what happened. I accidentally put a factor and a numeric into one &lt;code&gt;ifelse&lt;/code&gt; call, it converts them all to integer silently, and returned the integer levels of the factor. Not only did it change the values silently, it coincidentally converted the missing value too.&lt;/p&gt;
+&lt;p&gt;Consider a simpler example.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;set.seed(123)
+factor(LETTERS[1:5])&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] A B C D E
+## Levels: A B C D E&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# returns numeric vector instead of letters and numbers as character
+ifelse(rnorm(5) &amp;gt; 0, factor(LETTERS[1:5]), 6:10)  &lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] 6 7 3 4 5&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Note that the &lt;code&gt;3, 4, 5&lt;/code&gt; was from the factor of letters. You usually see it like characters when it was printed, but it’s actually integers with labels. For more details of factors, see &lt;a href=&#34;http://adv-r.had.co.nz/Data-structures.html#attributes&#34;&gt;this paragraph&lt;/a&gt; from &lt;em&gt;Advanced R&lt;/em&gt;.&lt;/p&gt;
+&lt;p&gt;Comparing to this one, where one factor and one character are in an &lt;code&gt;ifelse&lt;/code&gt; call, the factor will be converted to character, but not to their labels, but to the integer values.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;ifelse(rnorm(5) &amp;gt; 0, factor(LETTERS[1:5]), LETTERS[6:10])&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] &amp;quot;1&amp;quot; &amp;quot;2&amp;quot; &amp;quot;H&amp;quot; &amp;quot;I&amp;quot; &amp;quot;J&amp;quot;&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;In my data, the missing values associated with level &lt;code&gt;&amp;quot;(2) 2 = Hours&amp;quot;&lt;/code&gt; will not be affected, because it’s in the &lt;code&gt;FALSE&lt;/code&gt; statement of the &lt;code&gt;ifelse&lt;/code&gt;. However, the missing values in “(1) 1 = Minutes”, because of the misspelling, were converted to integer &lt;span class=&#34;math inline&#34;&gt;\(1\)&lt;/span&gt;, along with other values, in the &lt;code&gt;TRUE&lt;/code&gt; statement. Look at all the &lt;code&gt;time&lt;/code&gt; values that comes from a &lt;code&gt;&amp;quot;(1) 1 = Minutes&amp;quot;&lt;/code&gt;.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;sample_data %&amp;gt;% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == &amp;quot;(1) 1 = Minutes&amp;quot;, 
+                       ABC_DEFG123HIJ_UN,  # A typo here
+                       ABC_DEFG123HIJ_NN * 60))&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## # A tibble: 10 × 4
+##    CASEID ABC_DEFG123HIJ_UN ABC_DEFG123HIJ_NN  time
+##     &amp;lt;int&amp;gt;            &amp;lt;fctr&amp;gt;             &amp;lt;dbl&amp;gt; &amp;lt;dbl&amp;gt;
+## 1      31     (2) 2 = Hours                 2   120
+## 2      21   (1) 1 = Minutes                 5     1
+## 3      70     (2) 2 = Hours                 1    60
+## 4      22     (2) 2 = Hours                NA    NA
+## 5      47   (1) 1 = Minutes                30     1
+## 6      61     (2) 2 = Hours                 2   120
+## 7      25   (1) 1 = Minutes                 5     1
+## 8      43     (2) 2 = Hours                 3   180
+## 9      54   (1) 1 = Minutes                NA     1
+## 10     10     (2) 2 = Hours                 1    60&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;The typo created a valid new column from part-factor and part-integer, without any warning or error message, and perfectly disguised with some missing values carried over from “Hours”, and that caused me to look for variables that has 9 non-missing values and overlooked the real problem.&lt;/p&gt;
+&lt;p&gt;This is really annoying – even a funciton as simple as &lt;code&gt;ifelse&lt;/code&gt; is not that straightforward and safe to use. The mistake would be more obvious if I wasn’t using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn’t be ignored.&lt;/p&gt;
+&lt;p&gt;Then Hadley came to rescue. Use &lt;code&gt;dplyr::if_else&lt;/code&gt; instead of &lt;code&gt;ifelse&lt;/code&gt; to improve error and missing value handling.&lt;/p&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Give warnings when converting integer to factors
+if_else(rnorm(5) &amp;gt; 0, factor(LETTERS[1:5]), 6:10)  &lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## Warning in `[&amp;lt;-.factor`(`*tmp*`, i, value = 10L): invalid factor level, NA
+## generated&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1] A    B    C    D    &amp;lt;NA&amp;gt;
+## Levels: A B C D E&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;# Don&amp;#39;t convert factors
+if_else(rnorm(5) &amp;gt; 0, factor(LETTERS[1:5]), LETTERS[6:10])
+## Error: `false` has type &amp;#39;character&amp;#39; not &amp;#39;integer&amp;#39;&lt;/code&gt;&lt;/pre&gt;
+&lt;pre class=&#34;r&#34;&gt;&lt;code&gt;# Handling missing in condition
+if_else(c(TRUE, FALSE, NA), 1, 0, missing = -1)&lt;/code&gt;&lt;/pre&gt;
+&lt;pre&gt;&lt;code&gt;## [1]  1  0 -1&lt;/code&gt;&lt;/pre&gt;
+&lt;p&gt;Therefore I recommend using &lt;code&gt;dplyr::if_else&lt;/code&gt; whenever possible and use caution when dealing with factors. There might be some new package coming out soon to handle factors appropriately.&lt;/p&gt;
+
+
+&lt;!-- BLOGDOWN-HEAD
+
+
+
+
+/BLOGDOWN-HEAD --&gt;
+</description>
+    </item>
     
     <item>
       <title>RStudio Best Practice: General Options</title>
