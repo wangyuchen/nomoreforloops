@@ -1,0 +1,122 @@
+---
+date: 2017-02-08T16:48:15-05:00
+title: "A Mistake caused by ifelse and Factors"
+author: Yuchen Wang
+---
+
+I made a mistake in one of the data processing script I wrote in R a while ago and figured I should share the story with everybody.
+
+The mistake was caught recently when I had to re-do a similar request again. I've already discarded the script, so I started from scratch, and found that part of the numbers didn't match the old ones in one of the tables I sent. Without the old scripts, it's quite hard to figure out what happened, and it turned out it's just one letter that caused the problem.
+
+
+
+Here's a simplified example. There are two variables in this survey data set, and they work together as a time measurement. One is called something like `ABC_DEFG123HIJ_UN` that stands for unit of time, and the other is called `ABC_DEFG123HIJ_NN` which stands for the actual number. Here's a snippet of how the data looks like. In reality I can't view or print out the data because it's too big.
+
+```{r, echo=FALSE}
+sample_data <- structure(list(CASEID = c(31L, 21L, 70L, 22L, 47L, 61L, 25L, 43L, 54L, 10L), ABC_DEFG123HIJ_UN = structure(c(2L, 
+1L, 2L, 2L, 1L, 2L, 1L, 2L, 1L, 2L), .Label = c("(1) 1 = Minutes", 
+"(2) 2 = Hours"), class = "factor"), ABC_DEFG123HIJ_NN = c(2, 5, 
+1, NA, 30, 2, 5, 3, NA, 1)), row.names = c(NA, -10L), class = c("tbl_df", 
+"tbl", "data.frame"), .Names = c("CASEID", "ABC_DEFG123HIJ_UN", 
+"ABC_DEFG123HIJ_NN"))
+sample_data
+```
+
+
+
+To convert everything into time and calculate average (and also base size), this is all I needed to do.
+
+```{r, message = FALSE}
+library(dplyr)
+sample_data %>% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == "(1) 1 = Minutes", 
+                       ABC_DEFG123HIJ_NN, ABC_DEFG123HIJ_NN * 60)) %>% 
+  summarise(avg_time = mean(time, na.rm = TRUE), 
+            n = sum(!is.na(time)))
+```
+
+
+However, this is not what I've reported! I had an average of $60.4$ and $9$ non-missing observations. You probably have noticed that $9$ non-missing value is an error already, but without actually seeing the data I wouldn't know. The average of $72.5$ is close but since `n` is also different, I started to suspect that I might've used a wrong variable. Since I'm sure I'm using the same data, logically it can only be from a different variable that has $9$ non-missing values, right?
+
+
+> After going through all 2000 variables, I can't find any other variable that has exactly `9` non-missing values and produces an average of $60.4$.
+
+
+
+After struggling for 2 days, I found that the following script gave me the exact same result as before. Note that I misspelled `_NN` as `_UN`, probably because of auto-completion. 
+
+```{r}
+sample_data %>% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == "(1) 1 = Minutes", 
+                       ABC_DEFG123HIJ_UN,  # A typo here
+                       ABC_DEFG123HIJ_NN * 60)) %>% 
+    summarise(avg_time = mean(time, na.rm = TRUE), 
+              n = sum(!is.na(time)))
+
+```
+
+
+
+A closer look at what happened. I accidentally put a factor and a numeric into one `ifelse` call, it converts them all to integer silently, and returned the integer levels of the factor. Not only did it change the values silently, it coincidentally converted the missing value too.
+
+
+Consider a simpler example.
+
+```{r}
+set.seed(123)
+factor(LETTERS[1:5])
+# returns numeric vector instead of letters and numbers as character
+ifelse(rnorm(5) > 0, factor(LETTERS[1:5]), 6:10)  
+```
+
+Note that the `3, 4, 5` was from the factor of letters. You usually see it like characters when it was printed, but it's actually integers with labels. For more details of factors, see [this paragraph](http://adv-r.had.co.nz/Data-structures.html#attributes) from _Advanced R_.
+
+
+Comparing to this one, where one factor and one character are in an `ifelse` call, the factor will be converted to character, but not to their labels, but to the integer values.
+
+```{r}
+ifelse(rnorm(5) > 0, factor(LETTERS[1:5]), LETTERS[6:10])
+```
+
+
+In my data, the missing values associated with level `"(2) 2 = Hours"` will not be affected, because it's in the `FALSE` statement of the `ifelse`. However, the missing values in "(1) 1 = Minutes", because of the misspelling, were converted to integer $1$, along with other values, in the `TRUE` statement. Look at all the `time` values that comes from a `"(1) 1 = Minutes"`. 
+
+```{r}
+sample_data %>% 
+  mutate(time = ifelse(ABC_DEFG123HIJ_UN == "(1) 1 = Minutes", 
+                       ABC_DEFG123HIJ_UN,  # A typo here
+                       ABC_DEFG123HIJ_NN * 60))
+```
+
+
+The typo created a valid new column from part-factor and part-integer, without any warning or error message, and perfectly disguised with some missing values carried over from "Hours", and that caused me to look for variables that has 9 non-missing values and overlooked the real problem.
+
+
+This is really annoying -- even a funciton as simple as `ifelse` is not that straightforward and safe to use. The mistake would be more obvious if I wasn't using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn't be ignored.
+
+Then Hadley came to rescue. Use `dplyr::if_else` instead of `ifelse` to improve error and missing value handling.
+
+```{r}
+# Give warnings when converting integer to factors
+if_else(rnorm(5) > 0, factor(LETTERS[1:5]), 6:10)  
+```
+
+```
+# Don't convert factors
+if_else(rnorm(5) > 0, factor(LETTERS[1:5]), LETTERS[6:10])
+## Error: `false` has type 'character' not 'integer'
+```
+
+```{r}
+# Handling missing in condition
+if_else(c(TRUE, FALSE, NA), 1, 0, missing = -1)
+```
+
+
+Therefore I recommend using `dplyr::if_else` whenever possible and use caution when dealing with factors. There might be some new package coming out soon to handle factors appropriately.
+
+
+
+
+
+
