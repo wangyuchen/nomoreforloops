@@ -22,7 +22,7 @@ ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
     url = "https://www.linkedin.com/in/yuchen0712/"
 
 [params]
-    description = "A Blog on top priority details in R and statistics."
+    description = "Top-priority details in statistics, R, and everything else."
 
     # options for highlight.js (version, additional languages, and theme)
     highlightjsVersion = "9.9.0"
