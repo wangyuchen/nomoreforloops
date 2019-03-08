@@ -10,7 +10,7 @@ tags:
 
 
 
-<p>Updated 2019/03: Just as I expected at the end of this post two years ago, a new package <code>vctrs</code> has come out to handle type stablity. You can watch <a href="https://resources.rstudio.com/rstudio-conf-2019/vctrs-tools-for-making-size-and-type-consistent-functions">Hadley’s talk</a> at the RStudio conference 2019, in which he talked about base <code>ifelse</code> being too free and <code>dplyr::if_else</code> being too strict.</p>
+<p>Updated 2019/03: Just as I expected at the end of this post two years ago, a new package <code>vctrs</code> has come out to handle type stability. You can watch <a href="https://resources.rstudio.com/rstudio-conf-2019/vctrs-tools-for-making-size-and-type-consistent-functions">Hadley’s talk</a> at the RStudio conference 2019, in which he talked about base <code>ifelse</code> being too free and <code>dplyr::if_else</code> being too strict.</p>
 <hr />
 <p>I made a mistake in one of the data processing script I wrote in R a while ago and figured I should share the story with everybody.</p>
 <p>The mistake was caught recently when I had to re-do a similar request again. I’ve already discarded the script, so I started from scratch, and found that part of the numbers didn’t match the old ones in one of the tables I sent. Without the old scripts, it’s quite hard to figure out what happened, and it turned out it’s just one letter that caused the problem.</p>
@@ -37,7 +37,7 @@ sample_data %&gt;%
 ##   avg_time     n
 ##      &lt;dbl&gt; &lt;int&gt;
 ## 1     72.5     8</code></pre>
-<p>However, this is not what I’ve reported! I had an average of <span class="math inline">\(60.4\)</span> and <span class="math inline">\(9\)</span> non-missing observations. You probably have noticed that <span class="math inline">\(9\)</span> non-missing value is an error already, but without actually seeing the data I wouldn’t know. The average of <span class="math inline">\(72.5\)</span> is close but since <code>n</code> is also different, I started to suspect that I might’ve used a wrong variable. Since I’m sure I’m using the same data, logically it can only be from a different variable that has <span class="math inline">\(9\)</span> non-missing values, right?</p>
+<p>However, this is not what I’ve reported! I had an average of <span class="math inline">\(60.4\)</span> and <span class="math inline">\(9\)</span> non-missing observations. You probably have noticed that <span class="math inline">\(9\)</span> non-missing value is an error already, but without actually seeing the data I wouldn’t know. The average of <span class="math inline">\(72.5\)</span> is close but since <code>n</code> is also different, I started to suspect that I might have used a wrong variable. Since I’m sure I’m using the same data, logically it can only be from a different variable that has <span class="math inline">\(9\)</span> non-missing values, right?</p>
 <blockquote>
 <p>After going through all 2000 variables, I can’t find any other variable that has exactly <code>9</code> non-missing values and produces an average of <span class="math inline">\(60.4\)</span>.</p>
 </blockquote>
@@ -84,7 +84,7 @@ ifelse(rnorm(5) &gt; 0, factor(LETTERS[1:5]), 6:10)  </code></pre>
 ##  9     54 (1) 1 = Minutes                  NA     1
 ## 10     10 (2) 2 = Hours                     1    60</code></pre>
 <p>The typo created a valid new column from part-factor and part-integer, without any warning or error message, and perfectly disguised with some missing values carried over from “Hours”, and that caused me to look for variables that has 9 non-missing values and overlooked the real problem.</p>
-<p>This is really annoying – even a funciton as simple as <code>ifelse</code> is not that straightforward and safe to use. The mistake would be more obvious if I wasn’t using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn’t be ignored.</p>
+<p>This is really annoying – even a function as simple as <code>ifelse</code> is not that straightforward and safe to use. The mistake would be more obvious if I wasn’t using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn’t be ignored.</p>
 <p>Then Hadley came to rescue. Use <code>dplyr::if_else</code> instead of <code>ifelse</code> to improve error and missing value handling.</p>
 <pre class="r"><code># Give warnings when converting integer to factors
 if_else(rnorm(5) &gt; 0, factor(LETTERS[1:5]), 6:10)  </code></pre>

@@ -10,7 +10,7 @@ tags:
 
 
 Updated 2019/03:
-Just as I expected at the end of this post two years ago, a new package `vctrs` has come out to handle type stablity. You can watch [Hadley's talk](https://resources.rstudio.com/rstudio-conf-2019/vctrs-tools-for-making-size-and-type-consistent-functions) at the RStudio conference 2019, in which he talked about base `ifelse` being too free and `dplyr::if_else` being too strict.
+Just as I expected at the end of this post two years ago, a new package `vctrs` has come out to handle type stability. You can watch [Hadley's talk](https://resources.rstudio.com/rstudio-conf-2019/vctrs-tools-for-making-size-and-type-consistent-functions) at the RStudio conference 2019, in which he talked about base `ifelse` being too free and `dplyr::if_else` being too strict.
 
 ---
 
@@ -46,7 +46,7 @@ sample_data %>%
 ```
 
 
-However, this is not what I've reported! I had an average of $60.4$ and $9$ non-missing observations. You probably have noticed that $9$ non-missing value is an error already, but without actually seeing the data I wouldn't know. The average of $72.5$ is close but since `n` is also different, I started to suspect that I might've used a wrong variable. Since I'm sure I'm using the same data, logically it can only be from a different variable that has $9$ non-missing values, right?
+However, this is not what I've reported! I had an average of $60.4$ and $9$ non-missing observations. You probably have noticed that $9$ non-missing value is an error already, but without actually seeing the data I wouldn't know. The average of $72.5$ is close but since `n` is also different, I started to suspect that I might have used a wrong variable. Since I'm sure I'm using the same data, logically it can only be from a different variable that has $9$ non-missing values, right?
 
 
 > After going through all 2000 variables, I can't find any other variable that has exactly `9` non-missing values and produces an average of $60.4$.
@@ -102,7 +102,7 @@ sample_data %>%
 The typo created a valid new column from part-factor and part-integer, without any warning or error message, and perfectly disguised with some missing values carried over from "Hours", and that caused me to look for variables that has 9 non-missing values and overlooked the real problem.
 
 
-This is really annoying -- even a funciton as simple as `ifelse` is not that straightforward and safe to use. The mistake would be more obvious if I wasn't using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn't be ignored.
+This is really annoying -- even a function as simple as `ifelse` is not that straightforward and safe to use. The mistake would be more obvious if I wasn't using two variable names that close, but the unexpected behavior dealing with two variables from different classes still shouldn't be ignored.
 
 Then Hadley came to rescue. Use `dplyr::if_else` instead of `ifelse` to improve error and missing value handling.
 
