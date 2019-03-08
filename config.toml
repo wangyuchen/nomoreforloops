@@ -1,4 +1,4 @@
-baseurl = "http://www.prioritydetails.com/"
+baseurl = "https://www.prioritydetails.com/"
 relativeurls = true
 languageCode = "en-us"
 title = "Priority Details"
@@ -6,9 +6,15 @@ theme = "hugo-natrium-theme"
 googleAnalytics = "UA-90533434-1"
 disqusShortname = "priority-details"
 ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
+preserveTaxonomyNames = true
+rssLimit = 10
+paginate = 10
+pygmentsCodefences = true
+pygmentsStyle = "native"
 
 [permalinks]
-    post = "/:year/:month/:day/:slug/"
+    post = "/:year/:month/:slug/"
+    page = "/:slug/"
 
 [[menu.main]]
     name = "About"
