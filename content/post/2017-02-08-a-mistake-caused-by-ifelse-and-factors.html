@@ -1,11 +1,17 @@
 ---
-date: 2017-02-08T16:48:15-05:00
-title: "A Mistake caused by ifelse and Factors"
+title: (Updated 2019/03) A Mistake Caused by Ifelse and Factors
 author: Yuchen Wang
+date: '2017-02-08'
+categories:
+  - R
+tags:
+  - tidyverse
 ---
 
 
 
+<p>Updated 2019/03: Just as I expected at the end of this post two years ago, a new package <code>vctrs</code> has come out to handle type stablity. You can watch <a href="https://resources.rstudio.com/rstudio-conf-2019/vctrs-tools-for-making-size-and-type-consistent-functions">Hadley’s talk</a> at the RStudio conference 2019, in which he talked about base <code>ifelse</code> being too free and <code>dplyr::if_else</code> being too strict.</p>
+<hr />
 <p>I made a mistake in one of the data processing script I wrote in R a while ago and figured I should share the story with everybody.</p>
 <p>The mistake was caught recently when I had to re-do a similar request again. I’ve already discarded the script, so I started from scratch, and found that part of the numbers didn’t match the old ones in one of the tables I sent. Without the old scripts, it’s quite hard to figure out what happened, and it turned out it’s just one letter that caused the problem.</p>
 <p>Here’s a simplified example. There are two variables in this survey data set, and they work together as a time measurement. One is called something like <code>ABC_DEFG123HIJ_UN</code> that stands for unit of time, and the other is called <code>ABC_DEFG123HIJ_NN</code> which stands for the actual number. Here’s a snippet of how the data looks like. In reality I can’t view or print out the data because it’s too big.</p>

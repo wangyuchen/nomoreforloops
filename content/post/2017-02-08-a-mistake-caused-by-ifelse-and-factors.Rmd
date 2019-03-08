@@ -1,7 +1,17 @@
 ---
-date: 2017-02-08T16:48:15-05:00
-title: "A Mistake caused by ifelse and Factors"
+title: (Updated 2019/03) A Mistake Caused by Ifelse and Factors
 author: Yuchen Wang
+date: '2017-02-08'
+categories:
+  - R
+tags:
+  - tidyverse
+---
+
+
+Updated 2019/03:
+Just as I expected at the end of this post two years ago, a new package `vctrs` has come out to handle type stablity. You can watch [Hadley's talk](https://resources.rstudio.com/rstudio-conf-2019/vctrs-tools-for-making-size-and-type-consistent-functions) at the RStudio conference 2019, in which he talked about base `ifelse` being too free and `dplyr::if_else` being too strict.
+
 ---
 
 I made a mistake in one of the data processing script I wrote in R a while ago and figured I should share the story with everybody.
