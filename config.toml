@@ -5,7 +5,6 @@ title = "Priority Details"
 theme = "hugo-natrium-theme"
 googleAnalytics = "UA-90533434-1"
 disqusShortname = "priority-details"
-publishDir = "docs"
 ignoreFiles = ["\\.Rmd$", "_files$", "_cache$"]
 
 [permalinks]
