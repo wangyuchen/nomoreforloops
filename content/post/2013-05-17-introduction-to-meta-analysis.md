@@ -14,6 +14,6 @@ slug: introduction-to-meta-analysis
 
 
 
-This is a workshop on meta-analysis at East China Normal University. The slides of this talk is written in markdown and `reveal.js`. You can find the slides at https://www.prioritydetails.com/slides/meta-analysis/
+This is a workshop on meta-analysis at East China Normal University. The slides of this talk is written in markdown and `reveal.js`. You can find the slides at [https://www.prioritydetails.com/slides/meta-analysis/](/slides/meta-analysis/)
 
 
