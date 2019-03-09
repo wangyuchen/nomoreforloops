@@ -46,19 +46,13 @@ tags:
 2. 输入如下命令，注意修改里面的USERNAME为你自己Mac上的用户名 (可能需要sudo)：`nano /etc/apache2/users/USERNAME.conf`
 3. 添加下面的代码，同样需要改USERNAME，Directory可以不改，或者改成你想要的文件夹地址
 
-```
-# Mac apache config, create file at /etc/apache2/users/USERNAME.conf 
-<Directory "/Users/USERNAME/Sites/">
-Options Indexes Multiviews
-AllowOverride AuthConfig Limit
-Order allow,deny
-Allow from all
-</Directory>
-```
+{{< gist wangyuchen 5593641 >}}
+
+
 4. 输入如下命令：`sudo apachectl start`
 5. 在`~/Sites`或你改的文件夹里放入你的幻灯片，保证index.html在这个文件夹下。打开`localhost/~USERNAME`即可看到你的幻灯片了。
 
 这样做幻灯片的方法简单好用，但是遗憾的是markdown太好写了，幻灯片的内容大部分都局限于quote,list和code，使得幻灯片的内容非常单调，我都根本不高兴多做点效果进去。。但这也带来了好处，就是你必须更加仔细思考每一页幻灯片的内容，然后概括你的观点，把每一个层次的内容用不同的页面展示，基本不会做出需要照着念的幻灯片来。
 
 
-最后，用HTML5做的目的就是为了能放在自己网站上给人看，我这次做的关于meta—analysis的幻灯片在[http://wangyuchen.github.io/slides/meta-analysis/](http://wangyuchen.github.io/slides/meta-analysis/)。
+最后，用HTML5做的目的就是为了能放在自己网站上给人看，我这次做的关于meta—analysis的幻灯片在 (https://www.prioritydetails.com/slides/meta-analysis/)。
