@@ -1,0 +1,594 @@
+---
+title: Nonlinear Regression in R
+author: Yuchen Wang
+date: '2015-03-17'
+categories:
+  - R
+  - Statistics
+tags:
+  - nls
+  - regression
+---
+
+
+
+<p>The examples in this post is taken from a class I took at the University of Missouri. These examples are originally provided in SAS and I translated them to R.</p>
+<hr />
+<div id="non-linear-regression-with-available-starting-values" class="section level1">
+<h1>Non-linear Regression with Available Starting Values</h1>
+<p>The velocity of a chemical reaction (<span class="math inline">\(y\)</span>) is modeled as a function of the concentration of the chemical (<span class="math inline">\(x\)</span>). There are a total of 18 observations. The desired model is</p>
+<p><span class="math display">\[ y_i = \frac{\theta_0 x_i}{\theta_1 + x_i} + \epsilon_i. \]</span></p>
+<p>To find reasonable starting values for <span class="math inline">\(\theta_0\)</span> and <span class="math inline">\(\theta_1\)</span>, we take the inverse of the model expression (ignoring the error term) and fit the ordinary least-squares regression:</p>
+<p><span class="math display">\[ \frac{1}{y_i} = \frac{\theta_1 + x_i}{\theta_0 x_i} = \frac{1}{\theta_o} + 
+\frac{\theta_1}{\theta_0} (\frac{1}{x_i}).\]</span></p>
+<div id="descriptive-analysis" class="section level2">
+<h2>Descriptive analysis</h2>
+<pre class="r"><code>enzyme &lt;- read.table(&quot;datasets/enzyme.dat&quot;)
+names(enzyme) &lt;- c(&#39;y&#39;, &#39;x&#39;)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">y</th>
+<th align="right">x</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td align="right">2.1</td>
+<td align="right">1.0</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td align="right">2.5</td>
+<td align="right">1.5</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td align="right">4.9</td>
+<td align="right">2.0</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td align="right">5.5</td>
+<td align="right">3.0</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td align="right">7.0</td>
+<td align="right">4.0</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td align="right">8.4</td>
+<td align="right">5.0</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td align="right">9.6</td>
+<td align="right">6.0</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td align="right">10.2</td>
+<td align="right">7.5</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td align="right">11.4</td>
+<td align="right">8.5</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td align="right">12.5</td>
+<td align="right">10.0</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td align="right">13.1</td>
+<td align="right">12.5</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td align="right">14.6</td>
+<td align="right">15.0</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td align="right">17.0</td>
+<td align="right">17.5</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td align="right">16.8</td>
+<td align="right">20.0</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td align="right">18.6</td>
+<td align="right">25.0</td>
+</tr>
+<tr class="even">
+<td>16</td>
+<td align="right">19.7</td>
+<td align="right">30.0</td>
+</tr>
+<tr class="odd">
+<td>17</td>
+<td align="right">21.3</td>
+<td align="right">35.0</td>
+</tr>
+<tr class="even">
+<td>18</td>
+<td align="right">21.6</td>
+<td align="right">40.0</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code># plot the data
+require(ggplot2)
+p &lt;- ggplot(data = enzyme, aes(x, y)) + geom_point() + 
+  labs(y = &quot;Reaction Velocity&quot;, x = &quot;Concentration&quot;)
+p</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+</div>
+<div id="perform-an-ols-regression-to-find-starting-values" class="section level2">
+<h2>Perform an OLS regression to find starting values</h2>
+<pre class="r"><code>ols_fit &lt;- lsfit(1/enzyme$x, 1/enzyme$y)
+ols_fit$coefficients</code></pre>
+<pre><code>##  Intercept          X 
+## 0.03375868 0.45401397</code></pre>
+<p>So the starting values for <span class="math inline">\(\theta_0\)</span> and <span class="math inline">\(\theta_1\)</span> are given by: <span class="math display">\[\theta_0^{(0)} = 1 / \beta_0 = \frac{1}{0.03375868} = 29.62 \]</span> <span class="math display">\[\theta_1^{(0)} = \beta_1 / \beta_0 = \frac{0.45401397}{0.03375868} = 13.45 \]</span></p>
+</div>
+<div id="perform-a-non-linear-regression-with-gauss-newton-method" class="section level2">
+<h2>Perform a non-linear regression with Gauss-Newton method</h2>
+<div id="fit-the-model" class="section level3">
+<h3>Fit the model</h3>
+<p>The <code>nls()</code> function in <em>stats</em> package performs nonlinear (weighted) least-square estimates of the parameter of a nonlinear model. It can use a <code>formula</code> object to specify a model and any user-specified function can be used in the model. Because nonlinear models are sometimes complicated, here we showed how to use a customized <code>nlmodel()</code> function to specify the model.</p>
+<p>To match the SAS output, <code>trace = T</code> is set to print out iteration history. Note that the first column corresponding to the objective function and the other columns corresponding to the parameter estimates for each iteration.</p>
+<pre class="r"><code>nlmodel &lt;- function(x, theta0, theta1) theta0 * x / (theta1 + x)
+nls_fit &lt;- nls(y ~ nlmodel(x, theta0, theta1), data = enzyme, 
+               start = list(theta0 = 29.62, theta1 = 13.45), trace = T)</code></pre>
+<pre><code>## 6.57116 :  29.62 13.45
+## 4.303542 :  28.14228 12.59796
+## 4.302271 :  28.13785 12.57534
+## 4.302271 :  28.13708 12.57449
+## 4.302271 :  28.13705 12.57445</code></pre>
+<pre class="r"><code>nls_fit</code></pre>
+<pre><code>## Nonlinear regression model
+##   model: y ~ nlmodel(x, theta0, theta1)
+##    data: enzyme
+## theta0 theta1 
+##  28.14  12.57 
+##  residual sum-of-squares: 4.302
+## 
+## Number of iterations to convergence: 4 
+## Achieved convergence tolerance: 4.304e-07</code></pre>
+</div>
+<div id="parameter-estimates" class="section level3">
+<h3>Parameter estimates</h3>
+<p>Parameter estimates and other model summaries can be obtained using the <code>summary()</code> function.</p>
+<pre class="r"><code>sm &lt;- summary(nls_fit, correlation = T)
+sm$coefficients  # coefficients and their significance</code></pre>
+<pre><code>##        Estimate Std. Error  t value     Pr(&gt;|t|)
+## theta0 28.13705  0.7279790 38.65091 3.137221e-17
+## theta1 12.57445  0.7630534 16.47913 1.850253e-11</code></pre>
+<pre class="r"><code>sm$correlation  # correlation matrix of parameters</code></pre>
+<pre><code>##           theta0    theta1
+## theta0 1.0000000 0.9366248
+## theta1 0.9366248 1.0000000</code></pre>
+<p>To get individual confidence intervals on parameter estimates, we need to know the standard error of the estimates as well as the degree of freedom of the estimates of <span class="math inline">\(\sigma^2\)</span>. That can be obtained from <code>df.residual()</code>.</p>
+<pre class="r"><code>rdf &lt;- df.residual(nls_fit)
+# C.I. for theta0
+sm$coefficients[1, 1] + qt(c(.025, .975), rdf) * sm$coefficients[1, 2]</code></pre>
+<pre><code>## [1] 26.5938 29.6803</code></pre>
+<pre class="r"><code># C.I. for theta1
+sm$coefficients[2, 1] + qt(c(.025, .975), rdf) * sm$coefficients[2, 2]</code></pre>
+<pre><code>## [1] 10.95685 14.19205</code></pre>
+</div>
+<div id="leverage-values" class="section level3">
+<h3>Leverage Values</h3>
+<p>To compute the leverage, we need <span class="math inline">\(F\)</span> and <span class="math inline">\((F&#39;F)^{-1}\)</span>. The tangent plane hat matrix is <span class="math inline">\(H = F(F&#39;F)^{-1}F&#39;\)</span>. The leverage values are the diagonal elements of the hat matrix.</p>
+<pre class="r"><code>cf &lt;- nls_fit$m$gradient()  # cf: capital f matrix
+sm$cov.unscaled  # (F&#39;F)^(-1)</code></pre>
+<pre><code>##          theta0   theta1
+## theta0 1.970879 1.934914
+## theta1 1.934914 2.165370</code></pre>
+<pre class="r"><code>ch &lt;- cf %*% sm$cov.unscaled %*% t(cf)
+
+# diagonal of hat matrix
+kable(diag(ch), row.names = T, col.names = c(&quot;LEV&quot;))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">LEV</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td align="right">0.0176537</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td align="right">0.0328108</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td align="right">0.0484048</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td align="right">0.0759531</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td align="right">0.0956214</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td align="right">0.1072992</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td align="right">0.1124450</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td align="right">0.1117837</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td align="right">0.1080296</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td align="right">0.1003662</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td align="right">0.0882287</td>
+</tr>
+<tr class="even">
+<td>12</td>
+<td align="right">0.0818877</td>
+</tr>
+<tr class="odd">
+<td>13</td>
+<td align="right">0.0831978</td>
+</tr>
+<tr class="even">
+<td>14</td>
+<td align="right">0.0919111</td>
+</tr>
+<tr class="odd">
+<td>15</td>
+<td align="right">0.1271639</td>
+</tr>
+<tr class="even">
+<td>16</td>
+<td align="right">0.1783176</td>
+</tr>
+<tr class="odd">
+<td>17</td>
+<td align="right">0.2379108</td>
+</tr>
+<tr class="even">
+<td>18</td>
+<td align="right">0.3010149</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="studentized-residual-plots" class="section level3">
+<h3>Studentized residual plots</h3>
+<p>The studentized residual is computed as</p>
+<p><span class="math display">\[r_i = \frac{e_i}{s \sqrt{1 - \hat{H}_{ii}} } \]</span></p>
+<pre class="r"><code>rstudent &lt;- residuals(nls_fit) / (sm$sigma * sqrt(1 - diag(ch)))
+enzyme &lt;- data.frame(enzyme, rstudent)
+qplot(y, rstudent, data = enzyme, geom = &quot;point&quot;, xlab = &quot;Reaction Velocity&quot;)</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<pre class="r"><code>qplot(x, rstudent, data = enzyme, geom = &quot;point&quot;, xlab = &quot;Concentration&quot;)</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-10-2.png" width="672" /></p>
+</div>
+<div id="confidence-intervals-for-y" class="section level3">
+<h3>Confidence intervals for <span class="math inline">\(Y\)</span></h3>
+<p>The confidence interval is computed by <span class="math display">\[\hat{Y}_0 \pm t_{(n-p, 1-\alpha/2)} s [f_0&#39;(F&#39;F)^{-1}f_0]^{1/2} .\]</span> Note that if we want confidence interval at original <span class="math inline">\(x\)</span> values <span class="math inline">\(x_i\)</span>, the definition for <span class="math inline">\(f_0\)</span> here is just the transpose of <span class="math inline">\(F(\theta, x_i)\)</span>.</p>
+<pre class="r"><code>y0 &lt;- fitted(nls_fit)
+se &lt;- apply(t(cf), 2, function(f0) {
+  sm$sigma * {t(f0) %*% sm$cov.unscaled %*% f0}^(.5)
+})
+
+ll &lt;- fitted(nls_fit) + qt(.025, df.residual(nls_fit)) * se
+ul &lt;- fitted(nls_fit) + qt(.975, df.residual(nls_fit)) * se
+ci &lt;- data.frame(enzyme, ll, ul)
+
+
+p + stat_function(fun = nlmodel, args = as.list(coef(nls_fit))) +
+  geom_smooth(aes(ymin = ll, ymax = ul), data = ci, stat=&quot;identity&quot;)</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre class="r"><code># prediction intervals are similar
+se &lt;- apply(t(cf), 2, function(f0) {
+  sm$sigma * {1 + t(f0) %*% sm$cov.unscaled %*% f0}^(.5)
+})
+
+ll &lt;- fitted(nls_fit) + qt(.025, df.residual(nls_fit)) * se
+ul &lt;- fitted(nls_fit) + qt(.975, df.residual(nls_fit)) * se
+pi &lt;- data.frame(enzyme, ll, ul)
+
+p + stat_function(fun = nlmodel, args = as.list(coef(nls_fit))) +
+  geom_smooth(aes(ymin = ll, ymax = ul), data = ci, stat=&quot;identity&quot;) + 
+  geom_smooth(aes(ymin = ll, ymax = ul), data = pi, stat=&quot;identity&quot;)</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
+</div>
+</div>
+</div>
+<div id="non-linear-regression-using-grid-search" class="section level1">
+<h1>Non-linear Regression Using Grid-Search</h1>
+<p>We will model the time evolution of an algal sample taken in the Adriatic Sea (Cavallini, 1993). Time (<span class="math inline">\(x\)</span>) is expressed in days and biomass (<span class="math inline">\(y\)</span>), which is a measure of growth, is measured in mm2 (what is actually measured is the surface covered by biomass in a microscopic sample). The data seem to follow a logistic curve: <span class="math display">\[y_i = \frac{\theta_0}{1 + \exp (-\theta_1(x_i - \theta_2))}\]</span></p>
+<div id="descriptive-analysis-1" class="section level2">
+<h2>Descriptive analysis</h2>
+<pre class="r"><code>algal &lt;- data.frame(x = c(11, 15, 18, 23, 26, 31, 39, 44, 54, 64, 74), 
+                    y = c(.0048, .0105, .0207, .0619, .3370, 
+                          .7400, 1.7, 2.45, 3.5, 4.5, 5.09))
+kable(algal, row.names = T)</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th></th>
+<th align="right">x</th>
+<th align="right">y</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>1</td>
+<td align="right">11</td>
+<td align="right">0.0048</td>
+</tr>
+<tr class="even">
+<td>2</td>
+<td align="right">15</td>
+<td align="right">0.0105</td>
+</tr>
+<tr class="odd">
+<td>3</td>
+<td align="right">18</td>
+<td align="right">0.0207</td>
+</tr>
+<tr class="even">
+<td>4</td>
+<td align="right">23</td>
+<td align="right">0.0619</td>
+</tr>
+<tr class="odd">
+<td>5</td>
+<td align="right">26</td>
+<td align="right">0.3370</td>
+</tr>
+<tr class="even">
+<td>6</td>
+<td align="right">31</td>
+<td align="right">0.7400</td>
+</tr>
+<tr class="odd">
+<td>7</td>
+<td align="right">39</td>
+<td align="right">1.7000</td>
+</tr>
+<tr class="even">
+<td>8</td>
+<td align="right">44</td>
+<td align="right">2.4500</td>
+</tr>
+<tr class="odd">
+<td>9</td>
+<td align="right">54</td>
+<td align="right">3.5000</td>
+</tr>
+<tr class="even">
+<td>10</td>
+<td align="right">64</td>
+<td align="right">4.5000</td>
+</tr>
+<tr class="odd">
+<td>11</td>
+<td align="right">74</td>
+<td align="right">5.0900</td>
+</tr>
+</tbody>
+</table>
+<pre class="r"><code>require(ggplot2)
+p &lt;- ggplot(data = algal, aes(x, y)) + geom_point()
+p</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+</div>
+<div id="perform-a-nonlinear-regression-with-the-grid-search-method" class="section level2">
+<h2>Perform a nonlinear regression with the grid-search method</h2>
+<p>In R, we can perform the grid search and find the starting value manually.</p>
+<pre class="r"><code># setup grid
+grid &lt;- expand.grid(theta0 = seq(0, 10, 2), 
+                    theta1 = seq(0, .5, .1), 
+                    theta2 = seq(40, 60, 5))
+kable(head(grid))</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">theta0</th>
+<th align="right">theta1</th>
+<th align="right">theta2</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">40</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">0</td>
+<td align="right">40</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">0</td>
+<td align="right">40</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="right">0</td>
+<td align="right">40</td>
+</tr>
+<tr class="odd">
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">40</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="right">0</td>
+<td align="right">40</td>
+</tr>
+</tbody>
+</table>
+<p>We specify the nonlinear model and compute the sum of squares of error manually.</p>
+<pre class="r"><code>nlmodel &lt;- function(x, theta) {
+  theta[1] / (1 + exp(-theta[2] * (x - theta[3])))
+}
+
+sse &lt;- apply(grid, 1, function(theta) {
+  sum((algal$y - nlmodel(algal$x, theta))^2)
+})
+kable(head(data.frame(grid, sse)))  # only the head of the table is shown</code></pre>
+<table>
+<thead>
+<tr class="header">
+<th align="right">theta0</th>
+<th align="right">theta1</th>
+<th align="right">theta2</th>
+<th align="right">sse</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="right">0</td>
+<td align="right">0</td>
+<td align="right">40</td>
+<td align="right">67.96616</td>
+</tr>
+<tr class="even">
+<td align="right">2</td>
+<td align="right">0</td>
+<td align="right">40</td>
+<td align="right">42.13636</td>
+</tr>
+<tr class="odd">
+<td align="right">4</td>
+<td align="right">0</td>
+<td align="right">40</td>
+<td align="right">38.30656</td>
+</tr>
+<tr class="even">
+<td align="right">6</td>
+<td align="right">0</td>
+<td align="right">40</td>
+<td align="right">56.47676</td>
+</tr>
+<tr class="odd">
+<td align="right">8</td>
+<td align="right">0</td>
+<td align="right">40</td>
+<td align="right">96.64696</td>
+</tr>
+<tr class="even">
+<td align="right">10</td>
+<td align="right">0</td>
+<td align="right">40</td>
+<td align="right">158.81716</td>
+</tr>
+</tbody>
+</table>
+<p>Final starting values:</p>
+<pre class="r"><code>grid[which.min(sse), ]</code></pre>
+<pre><code>##    theta0 theta1 theta2
+## 82      6    0.1     50</code></pre>
+<div id="fit-the-nonlinear-model" class="section level3">
+<h3>Fit the nonlinear model</h3>
+<pre class="r"><code>nls_fit &lt;- nls(y ~ nlmodel(x, theta), data = algal, trace = T,
+               start = list(theta = c(6, .1, 50)))</code></pre>
+<pre><code>## 0.6350226 :   6.0  0.1 50.0
+## 0.2857354 :   5.0141669  0.1157241 45.8625826
+## 0.2384547 :   5.0887283  0.1221786 45.7619359
+## 0.2381781 :   5.0956237  0.1211468 45.7748836
+## 0.2381669 :   5.0947305  0.1213394 45.7743463
+## 0.2381665 :   5.0949589  0.1213007 45.7748138
+## 0.2381664 :   5.0949235  0.1213077 45.7747829
+## 0.2381664 :   5.0949315  0.1213063 45.7747980
+## 0.2381664 :   5.0949302  0.1213066 45.7747966</code></pre>
+<pre class="r"><code>nls_fit</code></pre>
+<pre><code>## Nonlinear regression model
+##   model: y ~ nlmodel(x, theta)
+##    data: algal
+##  theta1  theta2  theta3 
+##  5.0949  0.1213 45.7748 
+##  residual sum-of-squares: 0.2382
+## 
+## Number of iterations to convergence: 8 
+## Achieved convergence tolerance: 1.925e-06</code></pre>
+<pre class="r"><code>sm &lt;- summary(nls_fit, correlation = T)
+sm$coefficients</code></pre>
+<pre><code>##          Estimate Std. Error  t value     Pr(&gt;|t|)
+## theta1  5.0949302 0.19766239 25.77592 5.505407e-09
+## theta2  0.1213066 0.01159284 10.46393 6.044273e-06
+## theta3 45.7747966 1.17097569 39.09116 2.015699e-10</code></pre>
+<pre class="r"><code>sm$correlation</code></pre>
+<pre><code>##            theta1     theta2     theta3
+## theta1  1.0000000 -0.6865027  0.8166978
+## theta2 -0.6865027  1.0000000 -0.6528791
+## theta3  0.8166978 -0.6528791  1.0000000</code></pre>
+</div>
+<div id="confidence-intervals-for-parameter-estimates" class="section level3">
+<h3>Confidence intervals for parameter estimates</h3>
+<pre class="r"><code># the output shows theta 1-3, it&#39;s actually theta 0-2
+mapply(function(est, se) est + qt(c(.025, .975), df.residual(nls_fit)) * se,
+       sm$coefficients[, 1], sm$coefficients[, 2], SIMPLIFY = F)</code></pre>
+<pre><code>## $theta1
+## [1] 4.63912 5.55074
+## 
+## $theta2
+## [1] 0.09457346 0.14803972
+## 
+## $theta3
+## [1] 43.07452 48.47507</code></pre>
+</div>
+<div id="confidence-and-prediction-interval-for-y" class="section level3">
+<h3>Confidence and prediction interval for <span class="math inline">\(Y\)</span></h3>
+<pre class="r"><code>y0 &lt;- fitted(nls_fit)
+cf &lt;- cf &lt;- nls_fit$m$gradient() 
+se &lt;- apply(t(cf), 2, function(f0) {
+  sm$sigma * {t(f0) %*% sm$cov.unscaled %*% f0}^(.5)
+})
+
+ll &lt;- fitted(nls_fit) + qt(.025, df.residual(nls_fit)) * se
+ul &lt;- fitted(nls_fit) + qt(.975, df.residual(nls_fit)) * se
+ci &lt;- data.frame(algal, ll, ul)
+
+# prediction intervals are similar
+se &lt;- apply(t(cf), 2, function(f0) {
+  sm$sigma * {1 + t(f0) %*% sm$cov.unscaled %*% f0}^(.5)
+})
+
+ll &lt;- fitted(nls_fit) + qt(.025, df.residual(nls_fit)) * se
+ul &lt;- fitted(nls_fit) + qt(.975, df.residual(nls_fit)) * se
+pi &lt;- data.frame(algal, ll, ul)
+
+p + stat_function(fun = nlmodel, args = list(coef(nls_fit))) +
+  geom_smooth(aes(ymin = ll, ymax = ul), data = ci, stat=&quot;identity&quot;) + 
+  geom_smooth(aes(ymin = ll, ymax = ul), data = pi, stat=&quot;identity&quot;)</code></pre>
+<p><img src="/post/2015-03-17-nonlinear-regression-in-r_files/figure-html/unnamed-chunk-19-1.png" width="672" /></p>
+</div>
+</div>
+</div>
