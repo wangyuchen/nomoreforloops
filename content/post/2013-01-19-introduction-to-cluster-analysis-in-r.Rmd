@@ -17,7 +17,7 @@ Cluster analysis or clustering is the task of grouping a set of objects in such 
 
 Clustering can be applied to microarray data to identify groups of possibly co-regulated genes or spatial gene expression patterns. 
 
-In Anja von Heydebreck's presentation _Clustering analysis for microarray data_, he introduced many clustering methods including K-means lusting, PAM and Hierarchical clustering. He also gave some R packages which implemented these jobs. I will try to summary cluster analysis methods in R using microarray datasets. 
+In Anja von Heydebreck's presentation _Clustering analysis for microarray data_, he introduced many clustering methods including K-means clustering, PAM and Hierarchical clustering. He also gave some R packages which implemented these jobs. I will try to summary cluster analysis methods in R using microarray data sets. 
 
 
 Sample Data
@@ -51,11 +51,11 @@ golub.rearrange <- golub[ , order(apply(golub, 2, var), decreasing=T)]
 golub <- golub.rearrange[, 1:150]
 ```
 
-Then `golub` is the new dataset for use with all the following clustering methods. 
+Then `golub` is the new data set for use with all the following clustering methods. 
 
 Partitioning
 -------------
-The partitioning methods generally result in a set of M clusters, each object belonging to one cluster. Each cluster may be represented by a centroid or a cluster representative. If the number of the clusters is large, the centroids can be further clustered to produces hierarchy within a dataset.
+The partitioning methods generally result in a set of M clusters, each object belonging to one cluster. Each cluster may be represented by a centroid or a cluster representative. If the number of the clusters is large, the centroids can be further clustered to produces hierarchy within a data set.
 
 
 
@@ -77,7 +77,7 @@ aggregate(golub, by=list(fit$cluster), FUN=mean)
 ```
 
 ### Partitioning Around Medoids
-K-means clustering is based on Euclidean distance. PAM generalizes the idea and can be used with any distance measure. Just as in K-means clustering, PAM requires the number of clusters to be determined in advance. R recommands the `cluster` package (installed with R) for PAM. It implemented a pam object and summary methods.
+K-means clustering is based on Euclidean distance. PAM generalizes the idea and can be used with any distance measure. Just as in K-means clustering, PAM requires the number of clusters to be determined in advance. R recommends the `cluster` package (installed with R) for PAM. It implemented a pam object and summary methods.
 
 ```{r PAM, message=FALSE}
 require(cluster) 
