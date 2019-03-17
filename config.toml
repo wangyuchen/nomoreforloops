@@ -22,33 +22,32 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     name = "LinkedIn"
     url = "https://www.linkedin.com/in/yuchen0712/"
 
-[params]
-    description = "A website built through Hugo and blogdown."
+[Params]
+  subtitle = "Top-priority details in statistics, R, and everything else." # Subtitle of your site. Used in site header
+  description = "Top-priority details in statistics, R, and everything else." # Site description. Used in meta description
+  copyright = "Yuchen Wang" # copyright holder, otherwise will use site title
+  opengraph = true # Enable OpenGraph if true
+  twitter_cards = true # Enable Twitter Cards if true
+  readmore = false # Show "Read more" button in list if true
+  authorbox = true # Show authorbox at bottom of pages if true
+  toc = true # Enable Table of Contents
+  post_navigation = true # Show post navigation at bottom of pages if true
+  # post_meta = ["date", "categories", "translations"] # Order of post meta information. Use ["none"] to turn off completely.
+  postSections = ["post"] # the section pages to show on home page and the "Recent articles" widget
+  #postSections = ["blog", "news"] # alternative that shows more than one section's pages
+  dateformat = "2006-01-02" # change the format of dates
+  mathjax = true # Enable MathJax
+  mathjaxPath = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" # Specify MathJax path
+  mathjaxConfig = "TeX-AMS-MML_HTMLorMML" # Specify MathJax config
+  # customCSS = ["css/custom.css"] # Include custom CSS files
 
-    # options for highlight.js (version, additional languages, and theme)
-    highlightjsVersion = "9.12.0"
-    highlightjsCDN = "//cdnjs.cloudflare.com/ajax/libs"
-    highlightjsLang = ["r", "yaml"]
-    highlightjsTheme = "github"
-    
-    mathjax = true # Enable MathJax
-    mathjaxPath = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" # Specify MathJax path
-    mathjaxConfig = "TeX-AMS-MML_HTMLorMML" # Specify MathJax config
- 
-    # path to the favicon, under "static"
-    favicon = "favicon.ico"
-    
-    [Params.sidebar]
-    home = "right" # Configure layout for home page
-    list = "right"  # Configure layout for list pages
-    single = "right" # Configure layout for single pages
-    # Enable widgets in given order
-    widgets = ["linkedin", "recent", "categories", "taglist", "social", "languages"]
+[Params.sidebar]
+  home = "right" # Configure layout for home page
+  list = "right"  # Configure layout for list pages
+  single = "right" # Configure layout for single pages
+  # Enable widgets in given order
+  widgets = ["linkedin", "search", "recent", "categories", "taglist", "social", "languages"]
 
-
-
-    [params.logo]
-    url = "logo.png"
-    width = 50
-    height = 50
-    alt = "Logo"
+[Params.widgets]
+  recent_num = 5 # Set the number of articles in the "Recent articles" widget
+  tags_counter = false # Enable counter for each tag in "Tags" widget (disabled by default)
