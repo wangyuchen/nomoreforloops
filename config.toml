@@ -12,15 +12,22 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     post = "/:year/:month/:slug/"
     page = "/:slug/"
 
-[[menu.main]]
-    name = "About"
-    url = "/about/"
+
 [[menu.main]]
     name = "GitHub"
     url = "https://github.com/wangyuchen"
+    weight = -90
+
 [[menu.main]]
     name = "LinkedIn"
     url = "https://www.linkedin.com/in/yuchen0712/"
+    weight = -80
+
+[[menu.main]]
+    name = "About"
+    url = "/about/"
+    weight = -70
+    
 
 [Params]
   subtitle = "Top-priority details in statistics, R, and everything else." # Subtitle of your site. Used in site header
@@ -28,11 +35,11 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
   copyright = "Yuchen Wang" # copyright holder, otherwise will use site title
   opengraph = true # Enable OpenGraph if true
   twitter_cards = true # Enable Twitter Cards if true
-  readmore = false # Show "Read more" button in list if true
-  authorbox = true # Show authorbox at bottom of pages if true
-  toc = true # Enable Table of Contents
+  readmore = true # Show "Read more" button in list if true
+  authorbox = false # Show authorbox at bottom of pages if true
+  toc = false # Enable Table of Contents
   post_navigation = true # Show post navigation at bottom of pages if true
-  # post_meta = ["date", "categories", "translations"] # Order of post meta information. Use ["none"] to turn off completely.
+  post_meta = ["date", "categories", "translations"] # Order of post meta information. Use ["none"] to turn off completely.
   postSections = ["post"] # the section pages to show on home page and the "Recent articles" widget
   #postSections = ["blog", "news"] # alternative that shows more than one section's pages
   dateformat = "2006-01-02" # change the format of dates

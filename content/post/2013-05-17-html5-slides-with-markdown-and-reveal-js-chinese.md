@@ -14,6 +14,7 @@ tags:
 
 遇到一个小报告要做幻灯片，受了上周R沙龙上看到的可视化报告的影响，就想既然要做，不如做的好看点吧。想起第一次看到的HTML5幻灯片确实很震撼，后来才知道那个模板叫 `impress.js` ,我以前用过一次google的那个[html5 slides](https://code.google.com/p/html5slides/)，也用过Rmd文件用 `pandoc` 转成幻灯片, 总觉得各种支持不太好，做起来累，效果也远没有达到令人满意的地步。
 
+<!--more-->
 
 这次本来想做个`impress.js`的幻灯片的，但后来想想挺学术的报告，做的那么炫效果不一定好，就又查了查还有什么模板，看到了有人写的一篇[6 Best HTML5/CSS3 Presentation Frameworks](http://zoomzum.com/6-best-html5css3-presentation-frameworks/)，里面就有这个`reveal.js`，想了解这个模板最直接的就是看它的[demo](http://lab.hakim.se/reveal-js/)，我就不多废话了。
 
