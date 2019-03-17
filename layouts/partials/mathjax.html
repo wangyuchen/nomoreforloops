@@ -1,0 +1,3 @@
+{{ if .Site.Params.mathjax }}
+<script src="{{ .Site.Params.mathjaxPath | default "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" }}{{ with .Site.Params.mathjaxConfig | default "TeX-AMS-MML_HTMLorMML" }}?config={{ . }}{{ end }}" async></script>
+{{ end }}
