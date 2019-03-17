@@ -2,7 +2,7 @@ baseurl = "https://www.prioritydetails.com/"
 relativeurls = true
 languageCode = "en-us"
 title = "Priority Details"
-theme = "hugo-lithium"
+theme = "Mainroad"
 googleAnalytics = "UA-90533434-1"
 disqusShortname = "priority-details"
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
@@ -30,12 +30,22 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
     highlightjsCDN = "//cdnjs.cloudflare.com/ajax/libs"
     highlightjsLang = ["r", "yaml"]
     highlightjsTheme = "github"
-
-    MathJaxCDN = "//cdnjs.cloudflare.com/ajax/libs"
-    MathJaxVersion = "2.7.5"
-
+    
+    mathjax = true # Enable MathJax
+    mathjaxPath = "https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" # Specify MathJax path
+    mathjaxConfig = "TeX-AMS-MML_HTMLorMML" # Specify MathJax config
+ 
     # path to the favicon, under "static"
     favicon = "favicon.ico"
+    
+    [Params.sidebar]
+    home = "right" # Configure layout for home page
+    list = "left"  # Configure layout for list pages
+    single = false # Configure layout for single pages
+    # Enable widgets in given order
+    widgets = ["linkedin", "recent", "categories", "taglist", "social", "languages"]
+
+
 
     [params.logo]
     url = "logo.png"
