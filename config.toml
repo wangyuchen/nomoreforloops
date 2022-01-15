@@ -1,7 +1,7 @@
-baseurl = "https://www.prioritydetails.com/"
+baseurl = "https://www.nomoreforloops.com/"
 relativeurls = true
 languageCode = "en-us"
-title = "Priority Details"
+title = "No More For Loops"
 theme = "Mainroad"
 googleAnalytics = "UA-90533434-1"
 disqusShortname = "priority-details"
@@ -30,8 +30,8 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_cache$", "(^|/)renv$", "renv\\.lock
     
 
 [Params]
-  subtitle = "Top-priority details in statistics, R, and everything else." # Subtitle of your site. Used in site header
-  description = "Top-priority details in statistics, R, and everything else." # Site description. Used in meta description
+  subtitle = "I don't write for loops" # Subtitle of your site. Used in site header
+  description = "Data, statistics, R, and everything data science." # Site description. Used in meta description
   copyright = "Yuchen Wang" # copyright holder, otherwise will use site title
   opengraph = true # Enable OpenGraph if true
   twitter_cards = true # Enable Twitter Cards if true
