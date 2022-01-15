@@ -14,16 +14,6 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_cache$", "(^|/)renv$", "renv\\.lock
 
 
 [[menu.main]]
-    name = "GitHub"
-    url = "https://github.com/wangyuchen"
-    weight = -90
-
-[[menu.main]]
-    name = "LinkedIn"
-    url = "https://www.linkedin.com/in/yuchen0712/"
-    weight = -80
-
-[[menu.main]]
     name = "About"
     url = "/about/"
     weight = -70
@@ -53,11 +43,16 @@ ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_cache$", "(^|/)renv$", "renv\\.lock
   list = "right"  # Configure layout for list pages
   single = "right" # Configure layout for single pages
   # Enable widgets in given order
-  widgets = ["linkedin", "search", "recent", "categories", "taglist", "social", "languages"]
+  widgets = ["social", "search", "recent", "categories", "taglist", "languages"]
 
 [Params.widgets]
   recent_num = 5 # Set the number of articles in the "Recent articles" widget
   tags_counter = false # Enable counter for each tag in "Tags" widget (disabled by default)
+
+[Params.widgets.social]
+  linkedin = "yuchen0712"
+  github = "wangyuchen"
+
 
 [markup]
   [markup.goldmark]
